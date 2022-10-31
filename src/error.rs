@@ -11,6 +11,7 @@ pub enum ApplicationError {
     UnknownOpcodeName(String),
     UnsupportedGame(Game),
     InvalidSubtitleFile,
+    WriteFileFailed,
 }
 
 impl Display for ApplicationError {
@@ -23,6 +24,10 @@ impl Display for ApplicationError {
                 write!(f, "Unsupported game: {}", game.to_string())
             }
             ApplicationError::InvalidSubtitleFile => write!(f, "Invalid subtitle file"),
+            ApplicationError::WriteFileFailed => write!(
+                f,
+                "Failed to write merged DSC to file (maybe missing permissions?)"
+            ),
         }
     }
 }

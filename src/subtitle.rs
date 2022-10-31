@@ -42,9 +42,21 @@ impl SubtitleFile {
 
         let mut problematic_lines = Vec::new();
 
+        let mut last_end_time_ms = 0;
+
         for subtitle in self.subtitles.to_vec() {
             let start_time_ms = timestamp_to_millis(subtitle.start_time);
             let end_time_ms = timestamp_to_millis(subtitle.end_time);
+
+            if start_time_ms == last_end_time_ms {
+                // No need to reset the lyrics since the previous line's end is
+                // at the same time as the current line's start. So just remove
+                // the last LYRIC and TIME commands.
+                command_buffer.remove(command_buffer.len() - 1);
+                command_buffer.remove(command_buffer.len() - 1);
+            }
+
+            last_end_time_ms = end_time_ms;
 
             let start_time_command = get_time_command(start_time_ms * 100);
             command_buffer.push(start_time_command);

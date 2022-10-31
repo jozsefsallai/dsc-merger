@@ -1,7 +1,7 @@
 [package]
 name = "dsc-merger"
 description = "A merging utility for Project Diva DSC files."
-version = "0.1.2"
+version = "0.1.3"
 authors = ["József Sallai"]
 edition = "2021"
 

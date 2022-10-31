@@ -10,6 +10,7 @@ pub enum ApplicationError {
     UnknownOpcode(i32),
     UnknownOpcodeName(String),
     UnsupportedGame(Game),
+    InvalidSubtitleFile,
 }
 
 impl Display for ApplicationError {
@@ -21,6 +22,7 @@ impl Display for ApplicationError {
             ApplicationError::UnsupportedGame(game) => {
                 write!(f, "Unsupported game: {}", game.to_string())
             }
+            ApplicationError::InvalidSubtitleFile => write!(f, "Invalid subtitle file"),
         }
     }
 }

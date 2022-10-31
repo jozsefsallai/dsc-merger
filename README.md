@@ -21,6 +21,14 @@ such as Challenge Time or lyric markers.
 -   `-p` or `--plaintext-input` - A path to a dumped/plaintext DSC file. Uses the
     same syntax that's used in editors such as [Open PD Script Editor][se-url].
     You may provide multiple plaintext input files.
+-   `-s` or `--subtitle-input` - A path to an SRT file that contains timestamped
+    lyrics. You may provide multiple but their pv_db will be separate.
+-   `--pv-id` - The ID of the PV that will be used to generate the entries for
+    the lyrics in pv_db. By default this is set to 0.
+-   `--english-lyrics` - Whether the specified lyrics are in English. This will
+    make it use the `lyric_en` key instead of `lyric` for pv_db.
+-   `--max-lyric-length` - The maximum number of bytes that one line of lyrics
+    can consist of. Defaults to 75.
 -   `-o` or `--output` - The path to the output file. This argument is required.
 -   `-v` or `--verbose` - Enables verbose logging. Useful for debugging.
 -   `--dump` - Dumps a plaintext version of the merged DSC output. Useful for

@@ -13,6 +13,7 @@ mod dsc;
 mod error;
 mod merger;
 mod opcodes;
+mod subtitle;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -23,11 +24,23 @@ struct Arguments {
     #[arg(long, short)]
     plaintext_input: Vec<String>,
 
+    #[arg(long, short)]
+    subtitle_input: Vec<String>,
+
     #[arg(short, long)]
     output: String,
 
     #[arg(long, short)]
     game: String,
+
+    #[arg(long, default_value = "0")]
+    pv_id: u16,
+
+    #[arg(long)]
+    english_lyrics: bool,
+
+    #[arg(long, default_value = "75")]
+    max_lyric_length: u16,
 
     #[arg(long)]
     dump: bool,
@@ -55,6 +68,24 @@ fn handle_plaintext_file(game: Game, filename: &str) -> ApplicationResult<DSCVM>
     match file {
         Ok(mut file) => {
             let dsc_vm = DSCVM::load_plaintext(game, &mut file)?;
+
+            Ok(dsc_vm)
+        }
+        Err(_) => Err(ApplicationError::FileNotFound(filename.to_owned())),
+    }
+}
+
+fn handle_subtitle_file(
+    filename: &str,
+    pv_id: u16,
+    is_english: bool,
+    max_line_length: u16,
+) -> ApplicationResult<DSCVM> {
+    let file = std::fs::File::open(filename);
+
+    match file {
+        Ok(mut file) => {
+            let dsc_vm = DSCVM::load_subtitle(&mut file, pv_id, is_english, max_line_length)?;
 
             Ok(dsc_vm)
         }
@@ -108,6 +139,27 @@ fn main() {
         }
 
         let dsc_vm = handle_plaintext_file(game, &filename);
+
+        match dsc_vm {
+            Ok(dsc_vm) => merger.add_dsc(dsc_vm),
+            Err(e) => {
+                println!("{}", e);
+                return;
+            }
+        }
+    }
+
+    for filename in args.subtitle_input {
+        if args.verbose {
+            println!("Loading subtitle file: \"{}\"", filename);
+        }
+
+        let dsc_vm = handle_subtitle_file(
+            &filename,
+            args.pv_id,
+            args.english_lyrics,
+            args.max_lyric_length,
+        );
 
         match dsc_vm {
             Ok(dsc_vm) => merger.add_dsc(dsc_vm),

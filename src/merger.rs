@@ -1,5 +1,6 @@
+use crate::common::get_time_command;
 use crate::dsc::DSCVM;
-use crate::opcodes::{Command, Opcode, OpcodeMeta};
+use crate::opcodes::{Command, Opcode};
 
 pub struct Event {
     pub time: i32,
@@ -60,7 +61,7 @@ impl DSCMerger {
         let mut dsc_vm = DSCVM::new();
 
         for event in &self.events {
-            let time_command = self.get_time_command(event.time);
+            let time_command = get_time_command(event.time);
             dsc_vm.add_command(time_command);
 
             for command in &event.commands {
@@ -69,14 +70,5 @@ impl DSCMerger {
         }
 
         dsc_vm
-    }
-
-    fn get_time_command(&self, time: i32) -> Command {
-        let id = 1;
-        let opcode = Opcode::TIME;
-        let param_count: usize = 1;
-
-        let meta = OpcodeMeta::new(id, opcode, param_count);
-        return Command::new(meta, vec![time]);
     }
 }

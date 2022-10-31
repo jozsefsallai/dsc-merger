@@ -5,9 +5,9 @@ use std::{
 
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 
-use crate::common::Game;
-use crate::error::ApplicationResult;
+use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::Command;
+use crate::{common::Game, subtitle::SubtitleFile};
 
 pub struct DSCVM {
     pub command_buffer: Vec<Command>,
@@ -110,6 +110,24 @@ impl DSCVM {
         }
 
         Ok(Self { command_buffer })
+    }
+
+    pub fn load_subtitle(
+        file: &mut File,
+        pv_id: u16,
+        is_english: bool,
+        max_line_length: u16,
+    ) -> ApplicationResult<Self> {
+        let subtitle_file = SubtitleFile::load(file);
+        match subtitle_file {
+            Ok(subtitle_file) => {
+                let command_buffer = subtitle_file
+                    .create_lyric_commands(pv_id, is_english, max_line_length)
+                    .unwrap();
+                Ok(Self { command_buffer })
+            }
+            Err(_) => Err(ApplicationError::InvalidSubtitleFile),
+        }
     }
 
     pub fn dump(&self) -> String {

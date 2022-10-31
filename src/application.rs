@@ -97,6 +97,13 @@ impl Application {
             );
         }
 
+        if self.dsc_inputs.len() == 0
+            && self.plaintext_inputs.len() == 0
+            && self.subtitle_inputs.len() == 0
+        {
+            return Err(ApplicationError::NoInputFiles);
+        }
+
         let mut merger = DSCMerger::new();
 
         for filename in &self.dsc_inputs {

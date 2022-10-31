@@ -6,30 +6,50 @@ such as Challenge Time or lyric markers.
 
 ## Usage
 
+### Interactive Mode
+
+You can double-click the executable and follow the instructions on screen. You
+can use the arrow keys to navigate the menus/options and <kbd>Enter</kbd> to
+select or confirm them. For file paths, you can right click in the terminal
+window to paste.
+
+### Command Line Mode
+
+Command line mode is recommended for more advanced users or just those who like
+running things from the terminal. Here's an example command:
+
 ```
 ./dsc-merger -g "Future Tone" -i first_script.dsc -i second_script.dsc -p plaintext_script.dsc -o output.dsc
 ```
 
+Command line mode can also be useful for scripting, batch processing, or any
+other automation you might want to do.
+
+You can check the [Options](#options) section of this README for a list of all
+the available options that you can pass to the program. Passing ANY argument
+will not run the program in interactive mode.
+
 ## Options
 
 -   `-g` or `--game` - The game the encoded script files are made for. See the
-    **Supported Games** section for a list of valid values for this argument. This
-    argument is required.
--   `-i` or `--input` - A path to an encoded DSC file. Must be compatible with the
-    game specified with the `-g` argument. You may provide multiple input files by
-    specifying this argument multiple times.
--   `-p` or `--plaintext-input` - A path to a dumped/plaintext DSC file. Uses the
-    same syntax that's used in editors such as [Open PD Script Editor][se-url].
+    **Supported Games** section for a list of valid values for this argument.
+    Defaults to `FT` (Future Tone).
+-   `-i` or `--input` - A path to an encoded DSC file. Must be compatible with
+    the game specified with the `-g` argument. You may provide multiple input
+    files by specifying this argument multiple times.
+-   `-p` or `--plaintext-input` - A path to a dumped/plaintext DSC file. Uses
+    the same syntax that's used in editors such as [Open PD Script Editor][se-url].
     You may provide multiple plaintext input files.
 -   `-s` or `--subtitle-input` - A path to an SRT file that contains timestamped
     lyrics. You may provide multiple but their pv_db will be separate.
 -   `--pv-id` - The ID of the PV that will be used to generate the entries for
-    the lyrics in pv_db. By default this is set to 0.
+    the lyrics in pv_db. Defaults to `0`.
 -   `--english-lyrics` - Whether the specified lyrics are in English. This will
-    make it use the `lyric_en` key instead of `lyric` for pv_db.
+    make it use the `lyric_en` key instead of `lyric` for pv_db. Defaults to
+    `false`.
 -   `--max-lyric-length` - The maximum number of bytes that one line of lyrics
-    can consist of. Defaults to 75.
--   `-o` or `--output` - The path to the output file. This argument is required.
+    can consist of. Defaults to `75`.
+-   `-o` or `--output` - The path to the output file. Defaults to `output.dsc`.
 -   `-v` or `--verbose` - Enables verbose logging. Useful for debugging.
 -   `--dump` - Dumps a plaintext version of the merged DSC output. Useful for
     debugging.

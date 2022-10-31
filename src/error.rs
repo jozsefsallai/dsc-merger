@@ -12,6 +12,7 @@ pub enum ApplicationError {
     UnsupportedGame(Game),
     InvalidSubtitleFile,
     WriteFileFailed,
+    NoInputFiles,
 }
 
 impl Display for ApplicationError {
@@ -28,6 +29,7 @@ impl Display for ApplicationError {
                 f,
                 "Failed to write merged DSC to file (maybe missing permissions?)"
             ),
+            ApplicationError::NoInputFiles => write!(f, "You have not specified any input files."),
         }
     }
 }

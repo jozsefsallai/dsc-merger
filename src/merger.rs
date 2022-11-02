@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::common::{
     get_time_command, timestamp_to_millis, ChallengeTime, ChallengeTimeDifficulty,
 };
@@ -10,46 +12,39 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn new(time: i32) -> Self {
-        Self {
-            time,
-            commands: Vec::new(),
-        }
-    }
-
-    pub fn add_command(&mut self, command: Command) {
-        self.commands.push(command);
+    pub fn new(time: i32, commands: Vec<Command>) -> Self {
+        Self { time, commands }
     }
 }
 
 pub struct DSCMerger {
-    events: Vec<Event>,
+    events: HashMap<i32, Vec<Command>>,
 }
 
 impl DSCMerger {
     pub fn new() -> Self {
-        Self { events: Vec::new() }
+        Self {
+            events: HashMap::new(),
+        }
+    }
+
+    fn add_command(&mut self, timestamp: i32, command: Command) {
+        if let Some(commands) = self.events.get_mut(&timestamp) {
+            commands.push(command);
+        } else {
+            self.events.insert(timestamp, vec![command]);
+        }
     }
 
     pub fn add_dsc(&mut self, dsc_vm: DSCVM) {
-        let mut event: Option<Event> = None;
+        let mut current_ts = 0;
 
         for command in dsc_vm.command_buffer {
             if command.meta.opcode == Opcode::TIME {
-                if event.is_some() {
-                    self.events.push(event.unwrap());
-                }
-
-                event = Some(Event::new(command.args[0]));
+                current_ts = command.args[0];
             } else {
-                if event.is_some() {
-                    event.as_mut().unwrap().add_command(command);
-                }
+                self.add_command(current_ts, command);
             }
-        }
-
-        if event.is_some() {
-            self.events.push(event.unwrap());
         }
     }
 
@@ -72,26 +67,28 @@ impl DSCMerger {
             vec![mode_select_type, 3],
         );
 
-        let mut start_event = Event::new(start_time);
-        start_event.add_command(start_mode_select_command);
-
-        let mut end_event = Event::new(end_time);
-        end_event.add_command(end_mode_select_command);
-
-        self.events.push(start_event);
-        self.events.push(end_event);
+        self.add_command(start_time, start_mode_select_command);
+        self.add_command(end_time, end_mode_select_command);
     }
 
-    fn sort_by_time(&mut self) {
-        self.events.sort_by(|a, b| a.time.cmp(&b.time));
+    fn create_event_vector(&self) -> Vec<Event> {
+        let mut events: Vec<Event> = self
+            .events
+            .iter()
+            .map(|(time, commands)| Event::new(*time, commands.clone()))
+            .collect();
+
+        events.sort_by(|a, b| a.time.cmp(&b.time));
+
+        events
     }
 
     pub fn to_dsc(&mut self) -> DSCVM {
-        self.sort_by_time();
+        let events = self.create_event_vector();
 
         let mut dsc_vm = DSCVM::new();
 
-        for event in &self.events {
+        for event in events {
             let time_command = get_time_command(event.time);
             dsc_vm.add_command(time_command);
 

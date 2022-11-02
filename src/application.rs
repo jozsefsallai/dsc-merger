@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use crate::common::Game;
+use crate::common::{ChallengeTime, Game};
 use crate::dsc::DSCVM;
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::merger::DSCMerger;
@@ -16,6 +16,7 @@ pub struct Application {
     max_lyric_length: u16,
     dump: bool,
     verbose: bool,
+    challenge_time: Option<ChallengeTime>,
 }
 
 impl Application {
@@ -30,6 +31,7 @@ impl Application {
         max_lyric_length: u16,
         dump: bool,
         verbose: bool,
+        challenge_time: Option<ChallengeTime>,
     ) -> Self {
         Self {
             dsc_inputs,
@@ -42,6 +44,7 @@ impl Application {
             max_lyric_length,
             dump,
             verbose,
+            challenge_time,
         }
     }
 
@@ -149,6 +152,16 @@ impl Application {
                     return Err(e);
                 }
             }
+        }
+
+        match self.challenge_time {
+            Some(challenge_time) => {
+                if self.verbose {
+                    println!("Adding challenge time: {}", challenge_time);
+                    merger.add_challenge_time(challenge_time);
+                }
+            }
+            None => {}
         }
 
         if self.verbose {

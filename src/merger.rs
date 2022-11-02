@@ -1,6 +1,8 @@
-use crate::common::get_time_command;
+use crate::common::{
+    get_time_command, timestamp_to_millis, ChallengeTime, ChallengeTimeDifficulty,
+};
 use crate::dsc::DSCVM;
-use crate::opcodes::{Command, Opcode};
+use crate::opcodes::{Command, Opcode, OpcodeMeta};
 
 pub struct Event {
     pub time: i32,
@@ -49,6 +51,35 @@ impl DSCMerger {
         if event.is_some() {
             self.events.push(event.unwrap());
         }
+    }
+
+    pub fn add_challenge_time(&mut self, challenge_time: ChallengeTime) {
+        let start_time = timestamp_to_millis(challenge_time.start) * 100;
+        let end_time = timestamp_to_millis(challenge_time.end) * 100;
+
+        let mode_select_type = match challenge_time.difficulty {
+            ChallengeTimeDifficulty::Easy => 17,
+            ChallengeTimeDifficulty::Normal => 2,
+        };
+
+        let start_mode_select_command = Command::new(
+            OpcodeMeta::new(26, Opcode::MODE_SELECT, 2),
+            vec![mode_select_type, 1],
+        );
+
+        let end_mode_select_command = Command::new(
+            OpcodeMeta::new(26, Opcode::MODE_SELECT, 2),
+            vec![mode_select_type, 3],
+        );
+
+        let mut start_event = Event::new(start_time);
+        start_event.add_command(start_mode_select_command);
+
+        let mut end_event = Event::new(end_time);
+        end_event.add_command(end_mode_select_command);
+
+        self.events.push(start_event);
+        self.events.push(end_event);
     }
 
     fn sort_by_time(&mut self) {

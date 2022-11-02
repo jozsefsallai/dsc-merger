@@ -13,6 +13,8 @@ pub enum ApplicationError {
     InvalidSubtitleFile,
     WriteFileFailed,
     NoInputFiles,
+    InvalidTimestamp(String),
+    InvalidDifficultyString(String),
 }
 
 impl Display for ApplicationError {
@@ -30,6 +32,12 @@ impl Display for ApplicationError {
                 "Failed to write merged DSC to file (maybe missing permissions?)"
             ),
             ApplicationError::NoInputFiles => write!(f, "You have not specified any input files."),
+            ApplicationError::InvalidTimestamp(timestamp) => {
+                write!(f, "Invalid timestamp: {}", timestamp)
+            }
+            ApplicationError::InvalidDifficultyString(difficulty) => {
+                write!(f, "Invalid difficulty: {}", difficulty)
+            }
         }
     }
 }

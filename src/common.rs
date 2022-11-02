@@ -1,5 +1,8 @@
-use srtlib::Timestamp;
+use std::fmt::{Display, Formatter};
 
+use srtlib::{ParsingError, Timestamp};
+
+use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::{Command, Opcode, OpcodeMeta};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -21,6 +24,87 @@ impl Game {
             Game::Arcade => "Arcade",
         }
         .to_string()
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ChallengeTimeDifficulty {
+    Easy,
+    Normal,
+    // other difficulties don't have challenge time so not adding them
+}
+
+impl ChallengeTimeDifficulty {
+    pub fn from_string(difficulty: &str) -> Option<Self> {
+        match difficulty.to_lowercase().as_str() {
+            "easy" => Some(ChallengeTimeDifficulty::Easy),
+            "normal" => Some(ChallengeTimeDifficulty::Normal),
+            _ => None,
+        }
+    }
+
+    pub fn from_integer(difficulty: usize) -> Option<Self> {
+        match difficulty {
+            0 => Some(ChallengeTimeDifficulty::Easy),
+            1 => Some(ChallengeTimeDifficulty::Normal),
+            _ => None,
+        }
+    }
+}
+
+impl Display for ChallengeTimeDifficulty {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChallengeTimeDifficulty::Easy => write!(f, "Easy"),
+            ChallengeTimeDifficulty::Normal => write!(f, "Normal"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ChallengeTime {
+    pub difficulty: ChallengeTimeDifficulty,
+    pub start: Timestamp,
+    pub end: Timestamp,
+}
+
+impl ChallengeTime {
+    pub fn new(start: Timestamp, end: Timestamp, difficulty: ChallengeTimeDifficulty) -> Self {
+        Self {
+            start,
+            end,
+            difficulty,
+        }
+    }
+
+    pub fn build(
+        start_str: String,
+        end_str: String,
+        difficulty: ChallengeTimeDifficulty,
+    ) -> ApplicationResult<Self> {
+        let start = parse_challenge_time_timestamp(&start_str);
+
+        if start.is_err() {
+            return Err(ApplicationError::InvalidTimestamp(start_str));
+        }
+
+        let end = parse_challenge_time_timestamp(&end_str);
+
+        if end.is_err() {
+            return Err(ApplicationError::InvalidTimestamp(end_str));
+        }
+
+        Ok(Self::new(start.unwrap(), end.unwrap(), difficulty))
+    }
+}
+
+impl Display for ChallengeTime {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} -> {} ({} difficulty)",
+            self.start, self.end, self.difficulty
+        )
     }
 }
 
@@ -50,4 +134,11 @@ pub fn timestamp_to_millis(ts: Timestamp) -> i32 {
     let seconds_millis = seconds as i32 * 1000;
 
     return hours_millis + minutes_millis + seconds_millis + milliseconds as i32;
+}
+
+pub fn parse_challenge_time_timestamp(timestamp: &str) -> Result<Timestamp, ParsingError> {
+    // the Timestamp object supports a weird format so we have to work around it
+    // if we don't want to parse everything ourselves
+    let normalized_timestamp = timestamp.replace(".", ",");
+    return Timestamp::parse(format!("00:{}", normalized_timestamp).as_str());
 }

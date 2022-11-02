@@ -49,6 +49,16 @@ will not run the program in interactive mode.
     `false`.
 -   `--max-lyric-length` - The maximum number of bytes that one line of lyrics
     can consist of. Defaults to `75`.
+-   `--ct-start` - The time in `MM:SS.mmm` format at which the Challenge Time
+    will start. This argument is optional and will be ignored if `--ct-end` or
+    `--difficulty` are not specified.
+-   `--ct-end` - The time in `MM:SS.mmm` format at which the Challenge Time will
+    end. This argument is optional and will be ignored if `--ct-start` or
+    `--difficulty` are not specified.
+-   `--difficulty` - The difficulty of the chart (for Challenge Time). Valid
+    arguments are `easy` and `normal` and is case-insensitive. This argument is
+    optional and will be ignored if `--ct-start` or `--ct-end` are not
+    specified.
 -   `-o` or `--output` - The path to the output file. Defaults to `output.dsc`.
 -   `-v` or `--verbose` - Enables verbose logging. Useful for debugging.
 -   `--dump` - Dumps a plaintext version of the merged DSC output. Useful for

@@ -1,6 +1,9 @@
 use requestty::{prompt_one, Question};
 
-use crate::{application::Application, common::Game};
+use crate::{
+    application::Application,
+    common::{ChallengeTime, ChallengeTimeDifficulty, Game},
+};
 
 const GAME_MAP: [(&'static str, Game); 4] = [
     (
@@ -68,6 +71,17 @@ impl InteractiveTUI {
             max_lyric_length = tui.prompt_max_lyric_length();
         }
 
+        let has_challenge_time = tui.prompt_challenge_time();
+        let mut challenge_time: Option<ChallengeTime> = None;
+
+        if has_challenge_time {
+            let difficulty = tui.prompt_difficulty();
+            let start_str = tui.prompt_challenge_time_start();
+            let end_str = tui.prompt_challenge_time_end();
+
+            challenge_time = Some(ChallengeTime::build(start_str, end_str, difficulty).unwrap());
+        }
+
         let verbose = tui.prompt_verbose();
         let output = tui.prompt_output();
 
@@ -82,6 +96,7 @@ impl InteractiveTUI {
             max_lyric_length,
             false,
             verbose,
+            challenge_time,
         );
 
         match application.run() {
@@ -223,6 +238,73 @@ impl InteractiveTUI {
                     std::process::exit(-1);
                 }
             },
+            None => std::process::exit(-1),
+        }
+    }
+
+    fn prompt_challenge_time(&self) -> bool {
+        let question = Question::confirm("challenge_time")
+            .message("Does this chart have Challenge Time?")
+            .default(false)
+            .build();
+
+        let answer = prompt_one(question).unwrap();
+
+        match answer.as_bool() {
+            Some(input) => input,
+            None => std::process::exit(-1),
+        }
+    }
+
+    fn prompt_difficulty(&self) -> ChallengeTimeDifficulty {
+        let question = Question::select("difficulty")
+            .message("Select the difficulty of the chart.")
+            .choices(vec!["Easy", "Normal"])
+            .default_separator()
+            .choice("Abort")
+            .build();
+
+        let answer = prompt_one(question).unwrap();
+
+        match answer.as_list_item() {
+            Some(item) => match item.index {
+                3 => {
+                    println!("Aborted.");
+                    std::process::exit(0);
+                }
+                idx => {
+                    let difficulty = ChallengeTimeDifficulty::from_integer(idx).unwrap();
+                    difficulty
+                }
+            },
+            None => std::process::exit(-1),
+        }
+    }
+
+    fn prompt_challenge_time_start(&self) -> String {
+        let question = Question::input("start")
+            .message("Enter the start time of the Challenge Time section (MM:SS.mmm):")
+            .default("00:00:000")
+            .build();
+
+        let answer = prompt_one(question).unwrap();
+
+        match answer.as_string() {
+            Some(input) => input.to_string(),
+            None => std::process::exit(-1),
+        }
+    }
+
+    fn prompt_challenge_time_end(&self) -> String {
+        let question = Question::input("end")
+            .message("Enter the end time of the Challenge Time section (MM:SS.mmm):")
+            .default("00:00:000")
+            .build();
+
+        let answer = prompt_one(question).unwrap();
+
+        match answer.as_string() {
+            Some(input) => input.to_string(),
             None => std::process::exit(-1),
         }
     }

@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use srtlib::{ParsingError, Timestamp};
+use subparse::timetypes::TimePoint;
 
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::{Command, Opcode, OpcodeMeta};
@@ -64,12 +64,12 @@ impl Display for ChallengeTimeDifficulty {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ChallengeTime {
     pub difficulty: ChallengeTimeDifficulty,
-    pub start: Timestamp,
-    pub end: Timestamp,
+    pub start: i32,
+    pub end: i32,
 }
 
 impl ChallengeTime {
-    pub fn new(start: Timestamp, end: Timestamp, difficulty: ChallengeTimeDifficulty) -> Self {
+    pub fn new(start: i32, end: i32, difficulty: ChallengeTimeDifficulty) -> Self {
         Self {
             start,
             end,
@@ -126,19 +126,60 @@ pub fn get_lyric_command(idx: i32, mode: i32) -> Command {
     return Command::new(meta, vec![idx, mode]);
 }
 
-pub fn timestamp_to_millis(ts: Timestamp) -> i32 {
-    let (hours, minutes, seconds, milliseconds) = ts.get();
+pub fn timestamp_to_millis(ts: TimePoint) -> i32 {
+    let minutes = ts.mins_comp();
+    let seconds = ts.secs_comp();
+    let milliseconds = ts.msecs_comp();
 
-    let hours_millis = hours as i32 * 60 * 60 * 1000;
     let minutes_millis = minutes as i32 * 60 * 1000;
     let seconds_millis = seconds as i32 * 1000;
 
-    return hours_millis + minutes_millis + seconds_millis + milliseconds as i32;
+    return minutes_millis + seconds_millis + milliseconds as i32;
 }
 
-pub fn parse_challenge_time_timestamp(timestamp: &str) -> Result<Timestamp, ParsingError> {
-    // the Timestamp object supports a weird format so we have to work around it
-    // if we don't want to parse everything ourselves
-    let normalized_timestamp = timestamp.replace(".", ",");
-    return Timestamp::parse(format!("00:{}", normalized_timestamp).as_str());
+pub fn parse_challenge_time_timestamp(timestamp: &str) -> ApplicationResult<i32> {
+    // format is MM:SS.mmm
+    let components = timestamp.split('.').collect::<Vec<&str>>();
+
+    if components.len() != 2 {
+        return Err(ApplicationError::InvalidTimestamp(timestamp.to_string()));
+    }
+
+    let minutes_and_seconds = components[0].split(':').collect::<Vec<&str>>();
+    let milliseconds_str = components[1];
+
+    if minutes_and_seconds.len() != 2 {
+        return Err(ApplicationError::InvalidTimestamp(timestamp.to_string()));
+    }
+
+    let minutes = minutes_and_seconds[0].parse::<i32>();
+    let seconds = minutes_and_seconds[1].parse::<i32>();
+
+    if minutes.is_err() || seconds.is_err() {
+        return Err(ApplicationError::InvalidTimestamp(timestamp.to_string()));
+    }
+
+    let minutes = minutes.unwrap();
+    let seconds = seconds.unwrap();
+
+    if minutes < 0 || minutes > 99 || seconds < 0 || seconds > 59 {
+        return Err(ApplicationError::InvalidTimestamp(timestamp.to_string()));
+    }
+
+    let milliseconds = milliseconds_str.parse::<i32>();
+
+    if milliseconds.is_err() {
+        return Err(ApplicationError::InvalidTimestamp(timestamp.to_string()));
+    }
+
+    let milliseconds = milliseconds.unwrap();
+
+    if milliseconds < 0 || milliseconds > 999 {
+        return Err(ApplicationError::InvalidTimestamp(timestamp.to_string()));
+    }
+
+    let minutes_millis = minutes * 60 * 1000;
+    let seconds_millis = seconds * 1000;
+
+    return Ok(minutes_millis + seconds_millis + milliseconds);
 }

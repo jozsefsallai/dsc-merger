@@ -4,6 +4,7 @@ use crate::common::{ChallengeTime, Game};
 use crate::dsc::DSCVM;
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::merger::DSCMerger;
+use crate::subtitle::SubtitleKind;
 
 pub struct Application {
     dsc_inputs: Vec<String>,
@@ -75,12 +76,20 @@ impl Application {
     }
 
     fn handle_subtitle_file(&self, filename: &str) -> ApplicationResult<DSCVM> {
+        let extension = filename.split('.').last().unwrap();
+        let kind = SubtitleKind::from_extension(extension);
+
+        if kind.is_none() {
+            return Err(ApplicationError::InvalidSubtitleFile);
+        }
+
         let file = std::fs::File::open(filename);
 
         match file {
             Ok(mut file) => {
                 let dsc_vm = DSCVM::load_subtitle(
                     &mut file,
+                    kind.unwrap(),
                     self.pv_id,
                     self.english_lyrics,
                     self.max_lyric_length,

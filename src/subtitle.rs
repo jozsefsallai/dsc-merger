@@ -1,26 +1,60 @@
 use std::{fs::File, io::Read};
 
-use srtlib::Subtitles;
+use subparse::{SrtFile, SsaFile, SubtitleEntry, SubtitleFileInterface};
 
 use crate::common::{get_lyric_command, get_time_command, timestamp_to_millis};
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::Command;
 
+pub enum SubtitleKind {
+    SRT,
+    ASS,
+}
+
+impl SubtitleKind {
+    pub fn from_extension(extension: &str) -> Option<Self> {
+        let extension = extension.to_lowercase();
+
+        match extension.as_str() {
+            "srt" => Some(SubtitleKind::SRT),
+            "ass" | "ssa" => Some(SubtitleKind::ASS),
+            _ => None,
+        }
+    }
+}
+
 pub struct SubtitleFile {
-    subtitles: Subtitles,
+    entries: Vec<SubtitleEntry>,
 }
 
 impl SubtitleFile {
-    pub fn load(file: &mut File) -> ApplicationResult<Self> {
+    pub fn load_srt(file: &mut File) -> ApplicationResult<Self> {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
 
-        let subtitles =
-            Subtitles::parse_from_str(std::str::from_utf8(&buffer).unwrap().to_string());
+        let srt = SrtFile::parse(std::str::from_utf8(&buffer).unwrap());
 
-        match subtitles {
-            Ok(subtitles) => Ok(SubtitleFile { subtitles }),
-            Err(_) => Err(ApplicationError::InvalidSubtitleFile),
+        match srt {
+            Ok(srt) => {
+                let entries = srt.get_subtitle_entries().unwrap();
+                Ok(Self { entries })
+            }
+            Err(_) => return Err(ApplicationError::InvalidSubtitleFile),
+        }
+    }
+
+    pub fn load_ass(file: &mut File) -> ApplicationResult<Self> {
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).unwrap();
+
+        let ass = SsaFile::parse(std::str::from_utf8(&buffer).unwrap());
+
+        match ass {
+            Ok(ass) => {
+                let entries = ass.get_subtitle_entries().unwrap();
+                Ok(Self { entries })
+            }
+            Err(_) => return Err(ApplicationError::InvalidSubtitleFile),
         }
     }
 
@@ -44,9 +78,18 @@ impl SubtitleFile {
 
         let mut last_end_time_ms = 0;
 
-        for subtitle in self.subtitles.to_vec() {
-            let start_time_ms = timestamp_to_millis(subtitle.start_time);
-            let end_time_ms = timestamp_to_millis(subtitle.end_time);
+        for subtitle in &self.entries {
+            let line = &subtitle.line;
+
+            if line.is_none() {
+                continue;
+            }
+
+            let line = line.clone().unwrap();
+            let clean_line = line.trim();
+
+            let start_time_ms = timestamp_to_millis(subtitle.timespan.start);
+            let end_time_ms = timestamp_to_millis(subtitle.timespan.end);
 
             if start_time_ms == last_end_time_ms {
                 // No need to reset the lyrics since the previous line's end is
@@ -70,10 +113,8 @@ impl SubtitleFile {
             let lyric_reset_command = get_lyric_command(0, -1);
             command_buffer.push(lyric_reset_command);
 
-            let clean_text = subtitle.text.trim();
-
             let formatted_id = format!("{:0>3}", idx);
-            let line = format!("{}.{}.{}={}", pv_id, key, formatted_id, clean_text);
+            let line = format!("{}.{}.{}={}", pv_id, key, formatted_id, clean_line);
 
             println!("{}", line);
 

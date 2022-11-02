@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use crate::common::{
-    get_time_command, timestamp_to_millis, ChallengeTime, ChallengeTimeDifficulty,
-};
+use crate::common::{get_time_command, ChallengeTime, ChallengeTimeDifficulty};
 use crate::dsc::DSCVM;
 use crate::opcodes::{Command, Opcode, OpcodeMeta};
 
@@ -49,8 +47,8 @@ impl DSCMerger {
     }
 
     pub fn add_challenge_time(&mut self, challenge_time: ChallengeTime) {
-        let start_time = timestamp_to_millis(challenge_time.start) * 100;
-        let end_time = timestamp_to_millis(challenge_time.end) * 100;
+        let start_time = challenge_time.start * 100;
+        let end_time = challenge_time.end * 100;
 
         let mode_select_type = match challenge_time.difficulty {
             ChallengeTimeDifficulty::Easy => 17,

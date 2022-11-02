@@ -40,8 +40,10 @@ will not run the program in interactive mode.
 -   `-p` or `--plaintext-input` - A path to a dumped/plaintext DSC file. Uses
     the same syntax that's used in editors such as [Open PD Script Editor][se-url].
     You may provide multiple plaintext input files.
--   `-s` or `--subtitle-input` - A path to an SRT file that contains timestamped
-    lyrics. You may provide multiple but their pv_db will be separate.
+-   `-s` or `--subtitle-input` - A path to an SRT, ASS or SSA file that contains
+    timestamped lyrics. You may provide multiple but their pv_db will be
+    separate. The file must have one of the following extensions: `.srt`, `.ass`
+    or `.ssa`.
 -   `--pv-id` - The ID of the PV that will be used to generate the entries for
     the lyrics in pv_db. Defaults to `0`.
 -   `--english-lyrics` - Whether the specified lyrics are in English. This will

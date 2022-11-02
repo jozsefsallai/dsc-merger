@@ -5,9 +5,10 @@ use std::{
 
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 
+use crate::common::Game;
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::Command;
-use crate::{common::Game, subtitle::SubtitleFile};
+use crate::subtitle::{SubtitleFile, SubtitleKind};
 
 pub struct DSCVM {
     pub command_buffer: Vec<Command>,
@@ -114,11 +115,16 @@ impl DSCVM {
 
     pub fn load_subtitle(
         file: &mut File,
+        kind: SubtitleKind,
         pv_id: u16,
         is_english: bool,
         max_line_length: u16,
     ) -> ApplicationResult<Self> {
-        let subtitle_file = SubtitleFile::load(file);
+        let subtitle_file = match kind {
+            SubtitleKind::SRT => SubtitleFile::load_srt(file),
+            SubtitleKind::ASS => SubtitleFile::load_ass(file),
+        };
+
         match subtitle_file {
             Ok(subtitle_file) => {
                 let command_buffer = subtitle_file

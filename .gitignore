@@ -1,3 +1,5 @@
 /target
 *.dsc
 *.srt
+*.ass
+*.ssa

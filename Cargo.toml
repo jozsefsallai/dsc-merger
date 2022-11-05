@@ -1,12 +1,22 @@
 [package]
 name = "dsc-merger"
 description = "A merging utility for Project Diva DSC files."
-version = "0.1.5"
+version = "0.1.6"
 authors = ["József Sallai"]
 edition = "2021"
 
 [dependencies]
 byteorder = "1.4.3"
 clap = { version = "4.0.18", features = ["derive"] }
+gl = { version = "0.14.0", optional = true }
+imgui = { version = "0.8.2", optional = true }
+imgui-opengl-renderer = { version = "0.11.1", optional = true }
+imgui-sdl2 = { version = "0.15.0", optional = true }
 requestty = "0.5.0"
+rfd = { version = "0.10.0", optional = true }
+sdl2 = { version = "0.35.2", optional = true, features = ["bundled", "static-link"] }
+sdl2-sys = { version = "0.35.2", optional = true, features = ["bundled", "static-link"] }
 subparse = "0.7.0"
+
+[features]
+gui = ["gl", "imgui", "imgui-opengl-renderer", "sdl2", "sdl2-sys", "imgui-sdl2", "rfd"]

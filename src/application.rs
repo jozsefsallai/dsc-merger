@@ -3,10 +3,11 @@ use std::fs::File;
 use crate::common::{ChallengeTime, Game};
 use crate::dsc::DSCVM;
 use crate::error::{ApplicationError, ApplicationResult};
+use crate::logger::Logger;
 use crate::merger::DSCMerger;
 use crate::subtitle::SubtitleKind;
 
-pub struct Application {
+pub struct Application<'a> {
     dsc_inputs: Vec<String>,
     plaintext_inputs: Vec<String>,
     subtitle_inputs: Vec<String>,
@@ -18,9 +19,11 @@ pub struct Application {
     dump: bool,
     verbose: bool,
     challenge_time: Option<ChallengeTime>,
+
+    logger: &'a mut dyn Logger,
 }
 
-impl Application {
+impl<'a> Application<'a> {
     pub fn new(
         dsc_inputs: Vec<String>,
         plaintext_inputs: Vec<String>,
@@ -33,6 +36,7 @@ impl Application {
         dump: bool,
         verbose: bool,
         challenge_time: Option<ChallengeTime>,
+        logger: &'a mut dyn Logger,
     ) -> Self {
         Self {
             dsc_inputs,
@@ -46,6 +50,7 @@ impl Application {
             dump,
             verbose,
             challenge_time,
+            logger,
         }
     }
 
@@ -75,7 +80,7 @@ impl Application {
         }
     }
 
-    fn handle_subtitle_file(&self, filename: &str) -> ApplicationResult<DSCVM> {
+    fn handle_subtitle_file(&mut self, filename: &str) -> ApplicationResult<DSCVM> {
         let extension = filename.split('.').last().unwrap();
         let kind = SubtitleKind::from_extension(extension);
 
@@ -93,6 +98,7 @@ impl Application {
                     self.pv_id,
                     self.english_lyrics,
                     self.max_lyric_length,
+                    self.logger,
                 )?;
 
                 Ok(dsc_vm)
@@ -101,12 +107,12 @@ impl Application {
         }
     }
 
-    pub fn run(&self) -> ApplicationResult {
+    pub fn run(&mut self) -> ApplicationResult {
         if self.verbose {
-            println!(
+            self.logger.log(format!(
                 "Merging charts for target game: Project Diva {}.",
                 self.game.to_string()
-            );
+            ));
         }
 
         if self.dsc_inputs.len() == 0
@@ -120,7 +126,8 @@ impl Application {
 
         for filename in &self.dsc_inputs {
             if self.verbose {
-                println!("Loading DSC file: \"{}\"...", filename);
+                self.logger
+                    .log(format!("Loading DSC file: \"{}\"...", filename));
             }
 
             let dsc_vm = self.handle_file(&filename);
@@ -135,7 +142,10 @@ impl Application {
 
         for filename in &self.plaintext_inputs {
             if self.verbose {
-                println!("Loading plaintext/dumped DSC file: \"{}\"...", filename);
+                self.logger.log(format!(
+                    "Loading plaintext/dumped DSC file: \"{}\"...",
+                    filename
+                ));
             }
 
             let dsc_vm = self.handle_plaintext_file(&filename);
@@ -148,9 +158,10 @@ impl Application {
             }
         }
 
-        for filename in &self.subtitle_inputs {
+        for filename in self.subtitle_inputs.clone() {
             if self.verbose {
-                println!("Loading subtitle file: \"{}\"", filename);
+                self.logger
+                    .log(format!("Loading subtitle file: \"{}\"...", filename));
             }
 
             let dsc_vm = self.handle_subtitle_file(&filename);
@@ -166,7 +177,8 @@ impl Application {
         match self.challenge_time {
             Some(challenge_time) => {
                 if self.verbose {
-                    println!("Adding challenge time: {}", challenge_time);
+                    self.logger
+                        .log(format!("Adding challenge time: {}", challenge_time));
                     merger.add_challenge_time(challenge_time);
                 }
             }
@@ -174,7 +186,7 @@ impl Application {
         }
 
         if self.verbose {
-            println!("Merging DSC commands...")
+            self.logger.log("Merging DSC commands...".to_string())
         }
 
         let new_dsc = merger.to_dsc();
@@ -184,7 +196,10 @@ impl Application {
         }
 
         if self.verbose {
-            println!("Writing merged DSC to file: \"{}\"...", self.output);
+            self.logger.log(format!(
+                "Writing merged DSC to file: \"{}\"...",
+                self.output
+            ));
         }
 
         let output_file = File::create(&self.output);

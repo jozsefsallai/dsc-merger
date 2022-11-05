@@ -2,21 +2,9 @@ use requestty::{prompt_one, Question};
 
 use crate::{
     application::Application,
-    common::{ChallengeTime, ChallengeTimeDifficulty, Game},
+    common::{ChallengeTime, ChallengeTimeDifficulty, Game, GAME_MAP},
+    logger::simple_logger::SimpleLogger,
 };
-
-const GAME_MAP: [(&'static str, Game); 4] = [
-    (
-        "Project Diva AFT / Future Tone / Mega Mix / Mega Mix+",
-        Game::FutureTone,
-    ),
-    (
-        "Project Diva F / Dreamy Theater 2nd / Dreamy Theater Extend / f",
-        Game::F,
-    ),
-    ("Project Diva F 2nd", Game::F2nd),
-    ("Project Diva X", Game::X),
-];
 
 struct InputFiles {
     dsc: Vec<String>,
@@ -85,7 +73,9 @@ impl InteractiveTUI {
         let verbose = tui.prompt_verbose();
         let output = tui.prompt_output();
 
-        let application = Application::new(
+        let mut logger = SimpleLogger::new();
+
+        let mut application = Application::new(
             input_files.dsc,
             input_files.plaintext,
             input_files.subtitle,
@@ -97,6 +87,7 @@ impl InteractiveTUI {
             false,
             verbose,
             challenge_time,
+            &mut logger,
         );
 
         match application.run() {

@@ -5,10 +5,10 @@ use std::{
 
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 
-use crate::common::Game;
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::Command;
 use crate::subtitle::{SubtitleFile, SubtitleKind};
+use crate::{common::Game, logger::Logger};
 
 pub struct DSCVM {
     pub command_buffer: Vec<Command>,
@@ -113,20 +113,21 @@ impl DSCVM {
         Ok(Self { command_buffer })
     }
 
-    pub fn load_subtitle(
+    pub fn load_subtitle<'a>(
         file: &mut File,
         kind: SubtitleKind,
         pv_id: u16,
         is_english: bool,
         max_line_length: u16,
+        logger: &'a mut dyn Logger,
     ) -> ApplicationResult<Self> {
         let subtitle_file = match kind {
-            SubtitleKind::SRT => SubtitleFile::load_srt(file),
-            SubtitleKind::ASS => SubtitleFile::load_ass(file),
+            SubtitleKind::SRT => SubtitleFile::load_srt(file, logger),
+            SubtitleKind::ASS => SubtitleFile::load_ass(file, logger),
         };
 
         match subtitle_file {
-            Ok(subtitle_file) => {
+            Ok(mut subtitle_file) => {
                 let command_buffer = subtitle_file
                     .create_lyric_commands(pv_id, is_english, max_line_length)
                     .unwrap();

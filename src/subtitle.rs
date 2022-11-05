@@ -4,6 +4,7 @@ use subparse::{SrtFile, SsaFile, SubtitleEntry, SubtitleFileInterface};
 
 use crate::common::{get_lyric_command, get_time_command, timestamp_to_millis};
 use crate::error::{ApplicationError, ApplicationResult};
+use crate::logger::Logger;
 use crate::opcodes::Command;
 
 pub enum SubtitleKind {
@@ -23,12 +24,13 @@ impl SubtitleKind {
     }
 }
 
-pub struct SubtitleFile {
+pub struct SubtitleFile<'a> {
     entries: Vec<SubtitleEntry>,
+    logger: &'a mut dyn Logger,
 }
 
-impl SubtitleFile {
-    pub fn load_srt(file: &mut File) -> ApplicationResult<Self> {
+impl<'a> SubtitleFile<'a> {
+    pub fn load_srt(file: &mut File, logger: &'a mut dyn Logger) -> ApplicationResult<Self> {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
 
@@ -37,13 +39,13 @@ impl SubtitleFile {
         match srt {
             Ok(srt) => {
                 let entries = srt.get_subtitle_entries().unwrap();
-                Ok(Self { entries })
+                Ok(Self { entries, logger })
             }
             Err(_) => return Err(ApplicationError::InvalidSubtitleFile),
         }
     }
 
-    pub fn load_ass(file: &mut File) -> ApplicationResult<Self> {
+    pub fn load_ass(file: &mut File, logger: &'a mut dyn Logger) -> ApplicationResult<Self> {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).unwrap();
 
@@ -52,14 +54,14 @@ impl SubtitleFile {
         match ass {
             Ok(ass) => {
                 let entries = ass.get_subtitle_entries().unwrap();
-                Ok(Self { entries })
+                Ok(Self { entries, logger })
             }
             Err(_) => return Err(ApplicationError::InvalidSubtitleFile),
         }
     }
 
     pub fn create_lyric_commands(
-        self,
+        &mut self,
         pv_id: u16,
         is_english: bool,
         max_line_length: u16,
@@ -116,17 +118,18 @@ impl SubtitleFile {
             let formatted_id = format!("{:0>3}", idx);
             let line = format!("{}.{}.{}={}", pv_id, key, formatted_id, clean_line);
 
-            println!("{}", line);
-
             if line.len() > max_line_length as usize {
                 problematic_lines.push((idx, line.len()));
             }
+
+            self.logger.log_lyrics_line(line.clone());
 
             idx += 1;
         }
 
         for line in problematic_lines {
-            println!("\x1b[33mWarning: Line {} exceeds recommended byte length of {}. Actual length: {}\x1b[39m", line.0, max_line_length, line.1);
+            self.logger
+                .log_problematic_lyrics_line(line.0, max_line_length, line.1);
         }
 
         Ok(command_buffer)

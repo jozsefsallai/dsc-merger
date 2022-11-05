@@ -5,6 +5,19 @@ use subparse::timetypes::TimePoint;
 use crate::error::{ApplicationError, ApplicationResult};
 use crate::opcodes::{Command, Opcode, OpcodeMeta};
 
+pub const GAME_MAP: [(&'static str, Game); 4] = [
+    (
+        "Project Diva AFT / Future Tone / Mega Mix / Mega Mix+",
+        Game::FutureTone,
+    ),
+    (
+        "Project Diva F / Dreamy Theater 2nd / Dreamy Theater Extend / f",
+        Game::F,
+    ),
+    ("Project Diva F 2nd", Game::F2nd),
+    ("Project Diva X", Game::X),
+];
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Game {
     F,

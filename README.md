@@ -4,9 +4,30 @@ A command line utility for merging multiple Project Diva script files into one.
 Useful for patching charts exported from Comfy Studio with additional commands
 such as Challenge Time or lyric markers.
 
+## Download
+
+You can download DSC Merger from the [GitHub Releases][gh-releases-url] page.
+There are prebuilt binaries for Windows, Linux and macOS. Two flavors are
+available:
+
+-   `minimal`: command line mode and interactive mode
+-   `gui`: command line mode and GUI mode
+
 ## Usage
 
+### GUI Mode
+
+> **Note**
+> GUI mode is only available in the GUI flavor of the program.
+
+To use the GUI mode, simply run the program without any arguments or just double
+click on the executable. A window will appear with the options you can supply to
+the program.
+
 ### Interactive Mode
+
+> **Note**
+> Interactive mode is only available in the minimal flavor of the program.
 
 You can double-click the executable and follow the instructions on screen. You
 can use the arrow keys to navigate the menus/options and <kbd>Enter</kbd> to
@@ -97,6 +118,10 @@ cargo run -- -i first_script.dsc -i second_script.dsc -o output.dsc
 
 ## License
 
-MIT.
+MIT. [Inter font][inter-url] is licensed under the SIL Open Font License.
+[Noto Sans JP][noto-url] is licensed under the SIL Open Font License.
 
 [se-url]: https://github.com/nastys/Open-PD-Script-Editor
+[gh-releases-url]: https://github.com/jozsefsallai/dsc-merger/releases
+[inter-url]: https://github.com/rsms/inter/blob/master/LICENSE.txt
+[noto-url]: https://github.com/googlefonts/noto-cjk/blob/main/Sans/LICENSE

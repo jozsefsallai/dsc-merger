@@ -10,18 +10,20 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - target: x86_64-pc-windows-gnu
-                      archive: zip
-                    - target: x86_64-unknown-linux-musl
-                      archive: tar.gz tar.xz
-                    - target: x86_64-apple-darwin
-                      archive: zip
+                    - os: ubuntu-latest
+                      flavor: ["minimal", "gui"]
+                    - os: windows-latest
+                      flavor: ["minimal", "gui"]
+                    - os: macos-latest
+                      flavor: ["minimal", "gui"]
         steps:
             - uses: actions/checkout@master
             - name: Compile and release
-              uses: rust-build/rust-build.action@v1.3.2
-              env:
-                  GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+              uses: taiki-e/upload-rust-binary-action@v1
               with:
-                  RUSTTARGET: ${{ matrix.target }}
-                  ARCHIVE_TYPES: ${{ matrix.archive }}
+                  bin: dsc-merger
+                  token: ${{ secrets.RELEASE_TOKEN }}
+                  features: ${{ matrix.flavor == 'gui' && 'gui' || '' }}
+                  checksum: sha256
+                  include: LICENSE,README.md
+                  archive: $bin-$tag-$target-${{ matrix.flavor }}

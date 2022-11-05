@@ -5,7 +5,13 @@ use std::env;
 use clap::Parser;
 use common::{ChallengeTime, ChallengeTimeDifficulty, Game};
 use error::ApplicationResult;
+
+#[cfg(feature = "gui")]
+use gui::GUI;
+
+#[cfg(not(feature = "gui"))]
 use interactive::InteractiveTUI;
+use logger::simple_logger::SimpleLogger;
 
 use crate::application::Application;
 
@@ -13,7 +19,11 @@ mod application;
 mod common;
 mod dsc;
 mod error;
+#[cfg(feature = "gui")]
+mod gui;
+#[cfg(not(feature = "gui"))]
 mod interactive;
+mod logger;
 mod merger;
 mod opcodes;
 mod subtitle;
@@ -98,7 +108,12 @@ fn main() {
 
     if argc == 1 {
         // User probably double-clicked the exe
+        #[cfg(feature = "gui")]
+        GUI::new().run();
+
+        #[cfg(not(feature = "gui"))]
         InteractiveTUI::start();
+
         return;
     }
 
@@ -123,7 +138,9 @@ fn main() {
         return;
     }
 
-    let application = Application::new(
+    let mut logger = SimpleLogger::new();
+
+    let mut application = Application::new(
         args.input,
         args.plaintext_input,
         args.subtitle_input,
@@ -135,6 +152,7 @@ fn main() {
         args.dump,
         args.verbose,
         challenge_time.unwrap(),
+        &mut logger,
     );
 
     match application.run() {

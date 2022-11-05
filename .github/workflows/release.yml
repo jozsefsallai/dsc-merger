@@ -8,13 +8,8 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                include:
-                    - os: ubuntu-latest
-                      flavor: ["minimal", "gui"]
-                    - os: windows-latest
-                      flavor: ["minimal", "gui"]
-                    - os: macos-latest
-                      flavor: ["minimal", "gui"]
+                os: [ubuntu-latest, windows-latest, macos-latest]
+                flavor: [minimal, gui]
         runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@master

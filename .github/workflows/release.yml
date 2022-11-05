@@ -5,7 +5,6 @@ on:
 jobs:
     release:
         name: release ${{ matrix.target }}
-        runs-on: ubuntu-latest
         strategy:
             fail-fast: false
             matrix:
@@ -16,6 +15,7 @@ jobs:
                       flavor: ["minimal", "gui"]
                     - os: macos-latest
                       flavor: ["minimal", "gui"]
+        runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@master
             - name: Compile and release

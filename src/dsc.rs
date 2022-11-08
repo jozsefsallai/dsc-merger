@@ -34,10 +34,10 @@ impl DSCVM {
             _ => 0,
         };
 
-        file.seek(SeekFrom::Start(skip as u64)).unwrap();
+        file.seek(SeekFrom::Start(skip as u64))?;
 
         loop {
-            let opcode = file.read_i32::<LE>().unwrap();
+            let opcode = file.read_i32::<LE>()?;
 
             if opcode == 0 || (opcode == 1128681285 && (game == Game::F2nd || game == Game::X)) {
                 break;
@@ -48,7 +48,7 @@ impl DSCVM {
             let mut args = Vec::new();
 
             for _ in 0..opcode_meta.param_count {
-                let arg = file.read_i32::<LE>().unwrap();
+                let arg = file.read_i32::<LE>()?;
                 args.push(arg);
             }
 
@@ -69,7 +69,7 @@ impl DSCVM {
 
         for line in reader.lines() {
             let normalized_line = line
-                .unwrap()
+                .unwrap_or("".to_string())
                 .trim()
                 .replace(")", "")
                 .replace(";", "")
@@ -87,19 +87,26 @@ impl DSCVM {
 
             let opcode_name = components[0];
 
-            let mut opcode_args_list = components[1].split(",").collect::<Vec<&str>>();
-            let opcode_args = opcode_args_list
-                .iter_mut()
-                .map(|x| x.parse::<i32>().unwrap());
-
             let opcode_meta = Command::get_opcode_meta_from_name(game, opcode_name.to_owned());
 
             match opcode_meta {
                 Ok(opcode_meta) => {
+                    let opcode_args_list = components[1].split(",").collect::<Vec<&str>>();
+
                     let mut args = Vec::new();
 
-                    for arg in opcode_args {
-                        args.push(arg);
+                    for raw_arg in opcode_args_list.iter() {
+                        match raw_arg.parse::<i32>() {
+                            Ok(arg) => {
+                                args.push(arg);
+                            }
+                            Err(_) => {
+                                return Err(ApplicationError::ArgumentParseError(
+                                    opcode_name.to_string(),
+                                    raw_arg.to_string(),
+                                ));
+                            }
+                        }
                     }
 
                     command_buffer.push(Command::new(opcode_meta, args));
@@ -128,10 +135,10 @@ impl DSCVM {
 
         match subtitle_file {
             Ok(mut subtitle_file) => {
-                let command_buffer = subtitle_file
-                    .create_lyric_commands(pv_id, is_english, max_line_length)
-                    .unwrap();
-                Ok(Self { command_buffer })
+                match subtitle_file.create_lyric_commands(pv_id, is_english, max_line_length) {
+                    Ok(command_buffer) => Ok(Self { command_buffer }),
+                    Err(err) => Err(err),
+                }
             }
             Err(_) => Err(ApplicationError::InvalidSubtitleFile),
         }
@@ -151,26 +158,26 @@ impl DSCVM {
     pub fn write(&self, game: Game, file: &mut File) -> ApplicationResult {
         match game {
             Game::F => {
-                file.write_i32::<LE>(302121504).unwrap();
+                file.write_i32::<LE>(302121504)?;
             }
             Game::FutureTone => {
-                file.write_i32::<LE>(335874337).unwrap();
+                file.write_i32::<LE>(335874337)?;
             }
             Game::F2nd | Game::X => {
-                file.write_i32::<LE>(1129535056).unwrap();
+                file.write_i32::<LE>(1129535056)?;
 
                 for _ in 0..18 {
-                    file.write_i32::<LE>(0).unwrap();
+                    file.write_i32::<LE>(0)?;
                 }
             }
             _ => {}
         };
 
         for command in &self.command_buffer {
-            file.write_i32::<LE>(command.meta.id).unwrap();
+            file.write_i32::<LE>(command.meta.id)?;
 
             for arg in &command.args {
-                file.write_i32::<LE>(*arg).unwrap();
+                file.write_i32::<LE>(*arg)?;
             }
         }
 

@@ -114,7 +114,15 @@ impl GUIComponents {
                 .pick_file();
 
             if let Some(file) = file {
-                state.add_dsc_input(file.as_path().to_str().unwrap().to_string());
+                match file.as_path().to_str() {
+                    Some(file_path) => {
+                        state.add_dsc_input(file_path.to_string());
+                    }
+                    None => {
+                        state.error_message = "Failed to parse file path.".to_string();
+                        state.show_error_dialog = true;
+                    }
+                }
             }
         }
 
@@ -149,7 +157,15 @@ impl GUIComponents {
             let file = FileDialog::new().pick_file();
 
             if let Some(file) = file {
-                state.add_plaintext_input(file.as_path().to_str().unwrap().to_string());
+                match file.as_path().to_str() {
+                    Some(file_path) => {
+                        state.add_plaintext_input(file_path.to_string());
+                    }
+                    None => {
+                        state.error_message = "Failed to parse file path.".to_string();
+                        state.show_error_dialog = true;
+                    }
+                }
             }
         }
 
@@ -188,7 +204,15 @@ impl GUIComponents {
                 .pick_file();
 
             if let Some(file) = file {
-                state.add_subtitle_input(file.as_path().to_str().unwrap().to_string());
+                match file.as_path().to_str() {
+                    Some(file_path) => {
+                        state.add_subtitle_input(file_path.to_string());
+                    }
+                    None => {
+                        state.error_message = "Failed to parse file path.".to_string();
+                        state.show_error_dialog = true;
+                    }
+                }
             }
         }
 
@@ -322,10 +346,20 @@ impl GUIComponents {
         ui.same_line();
 
         if ui.button("Browse") {
-            let path = FileDialog::new().save_file();
+            let path = FileDialog::new()
+                .add_filter("DSC files", &["dsc"])
+                .save_file();
 
             if let Some(path) = path {
-                state.set_output(path.as_path().to_str().unwrap().to_string());
+                match path.as_path().to_str() {
+                    Some(file_path) => {
+                        state.set_output(file_path.to_string());
+                    }
+                    None => {
+                        state.error_message = "Failed to parse file path.".to_string();
+                        state.show_error_dialog = true;
+                    }
+                }
             }
         }
     }
@@ -545,7 +579,7 @@ impl GUIComponents {
 
     fn filename_from_path(&self, path: &str) -> String {
         let path = Path::new(path);
-        let filename = path.file_name().unwrap().to_str().unwrap();
+        let filename = path.file_name().unwrap().to_str().unwrap_or("");
         filename.to_string()
     }
 }

@@ -81,7 +81,7 @@ impl<'a> Application<'a> {
     }
 
     fn handle_subtitle_file(&mut self, filename: &str) -> ApplicationResult<DSCVM> {
-        let extension = filename.split('.').last().unwrap();
+        let extension = filename.split('.').last().unwrap_or("srt");
         let kind = SubtitleKind::from_extension(extension);
 
         if kind.is_none() {
@@ -205,9 +205,7 @@ impl<'a> Application<'a> {
         let output_file = File::create(&self.output);
 
         if let Ok(mut output_file) = output_file {
-            new_dsc.write(self.game, &mut output_file).unwrap();
-
-            Ok(())
+            new_dsc.write(self.game, &mut output_file)
         } else {
             Err(ApplicationError::WriteFileFailed)
         }

@@ -79,9 +79,11 @@ struct Arguments {
 
 fn get_challenge_time_object(args: &Arguments) -> ApplicationResult<Option<ChallengeTime>> {
     if args.ct_start.is_some() && args.ct_end.is_some() && args.difficulty.is_some() {
-        let start_str = args.ct_start.as_ref().unwrap();
-        let end_str = args.ct_end.as_ref().unwrap();
-        let difficulty_str = args.difficulty.as_ref().unwrap();
+        let fallback = "".to_string();
+
+        let start_str = args.ct_start.as_ref().unwrap_or(&fallback);
+        let end_str = args.ct_end.as_ref().unwrap_or(&fallback);
+        let difficulty_str = args.difficulty.as_ref().unwrap_or(&fallback);
         let difficulty = ChallengeTimeDifficulty::from_string(&difficulty_str);
 
         match difficulty {

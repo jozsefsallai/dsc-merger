@@ -67,7 +67,13 @@ impl InteractiveTUI {
             let start_str = tui.prompt_challenge_time_start();
             let end_str = tui.prompt_challenge_time_end();
 
-            challenge_time = Some(ChallengeTime::build(start_str, end_str, difficulty).unwrap());
+            match ChallengeTime::build(start_str, end_str, difficulty) {
+                Ok(ct) => challenge_time = Some(ct),
+                Err(e) => {
+                    println!("Error: {}", e);
+                    return;
+                }
+            }
         }
 
         let verbose = tui.prompt_verbose();
@@ -114,13 +120,13 @@ impl InteractiveTUI {
                     println!("Aborted.");
                     std::process::exit(0);
                 }
-                _ => {
-                    let (_, game) = GAME_MAP
-                        .iter()
-                        .find(|(name, _)| name == &item.text)
-                        .unwrap();
-                    *game
-                }
+                _ => match GAME_MAP.iter().find(|(name, _)| name == &item.text) {
+                    Some((_, game)) => *game,
+                    None => {
+                        println!("Error: Invalid game.");
+                        std::process::exit(1);
+                    }
+                },
             },
             None => std::process::exit(-1),
         }

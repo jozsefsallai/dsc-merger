@@ -32,13 +32,15 @@ pub struct SubtitleFile<'a> {
 impl<'a> SubtitleFile<'a> {
     pub fn load_srt(file: &mut File, logger: &'a mut dyn Logger) -> ApplicationResult<Self> {
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).unwrap();
+        file.read_to_end(&mut buffer)?;
 
-        let srt = SrtFile::parse(std::str::from_utf8(&buffer).unwrap());
+        let file_contents = std::str::from_utf8(&buffer)?;
+
+        let srt = SrtFile::parse(file_contents);
 
         match srt {
             Ok(srt) => {
-                let entries = srt.get_subtitle_entries().unwrap();
+                let entries = srt.get_subtitle_entries().unwrap_or(Vec::new());
                 Ok(Self { entries, logger })
             }
             Err(_) => return Err(ApplicationError::InvalidSubtitleFile),
@@ -47,13 +49,15 @@ impl<'a> SubtitleFile<'a> {
 
     pub fn load_ass(file: &mut File, logger: &'a mut dyn Logger) -> ApplicationResult<Self> {
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).unwrap();
+        file.read_to_end(&mut buffer)?;
 
-        let ass = SsaFile::parse(std::str::from_utf8(&buffer).unwrap());
+        let file_contents = std::str::from_utf8(&buffer)?;
+
+        let ass = SsaFile::parse(file_contents);
 
         match ass {
             Ok(ass) => {
-                let entries = ass.get_subtitle_entries().unwrap();
+                let entries = ass.get_subtitle_entries().unwrap_or(Vec::new());
                 Ok(Self { entries, logger })
             }
             Err(_) => return Err(ApplicationError::InvalidSubtitleFile),
@@ -87,7 +91,7 @@ impl<'a> SubtitleFile<'a> {
                 continue;
             }
 
-            let line = line.clone().unwrap();
+            let line = line.clone().unwrap_or("".to_string());
             let clean_line = line.trim();
 
             let start_time_ms = timestamp_to_millis(subtitle.timespan.start);

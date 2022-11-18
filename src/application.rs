@@ -11,6 +11,7 @@ pub struct Application<'a> {
     dsc_inputs: Vec<String>,
     plaintext_inputs: Vec<String>,
     subtitle_inputs: Vec<String>,
+    remove_targets_inputs: Vec<String>,
     output: String,
     game: Game,
     pv_id: u16,
@@ -28,6 +29,7 @@ impl<'a> Application<'a> {
         dsc_inputs: Vec<String>,
         plaintext_inputs: Vec<String>,
         subtitle_inputs: Vec<String>,
+        remove_targets_inputs: Vec<String>,
         output: String,
         game: Game,
         pv_id: u16,
@@ -42,6 +44,7 @@ impl<'a> Application<'a> {
             dsc_inputs,
             plaintext_inputs,
             subtitle_inputs,
+            remove_targets_inputs,
             output,
             game,
             pv_id,
@@ -56,10 +59,11 @@ impl<'a> Application<'a> {
 
     fn handle_file(&self, filename: &str) -> ApplicationResult<DSCVM> {
         let file = File::open(filename);
+        let remove_targets = self.remove_targets_inputs.contains(&filename.to_string());
 
         match file {
             Ok(mut file) => {
-                let dsc_vm = DSCVM::load(self.game, &mut file)?;
+                let dsc_vm = DSCVM::load(self.game, &mut file, remove_targets)?;
 
                 Ok(dsc_vm)
             }
@@ -69,10 +73,11 @@ impl<'a> Application<'a> {
 
     fn handle_plaintext_file(&self, filename: &str) -> ApplicationResult<DSCVM> {
         let file = std::fs::File::open(filename);
+        let remove_targets = self.remove_targets_inputs.contains(&filename.to_string());
 
         match file {
             Ok(mut file) => {
-                let dsc_vm = DSCVM::load_plaintext(self.game, &mut file)?;
+                let dsc_vm = DSCVM::load_plaintext(self.game, &mut file, remove_targets)?;
 
                 Ok(dsc_vm)
             }

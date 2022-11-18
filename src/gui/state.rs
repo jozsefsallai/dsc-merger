@@ -17,6 +17,8 @@ pub struct GUIState {
     pub dsc_inputs: Vec<String>,
     pub plaintext_inputs: Vec<String>,
     pub subtitle_inputs: Vec<String>,
+    pub remove_targets_map: Vec<(String, bool)>,
+
     pub output: String,
     game: Game,
 
@@ -38,6 +40,7 @@ pub struct GUIState {
     pub is_merging: bool,
 
     pub show_lyrics_dialog: bool,
+    pub show_remove_targets_dialog: bool,
 
     pub show_success_dialog: bool,
     pub show_error_dialog: bool,
@@ -55,6 +58,7 @@ impl GUIState {
             dsc_inputs: Vec::new(),
             plaintext_inputs: Vec::new(),
             subtitle_inputs: Vec::new(),
+            remove_targets_map: Vec::new(),
             output: String::new(),
             game: Game::FutureTone,
 
@@ -76,6 +80,7 @@ impl GUIState {
             is_merging: false,
 
             show_lyrics_dialog: false,
+            show_remove_targets_dialog: false,
 
             show_success_dialog: false,
             show_error_dialog: false,
@@ -87,6 +92,7 @@ impl GUIState {
         self.dsc_inputs.clear();
         self.plaintext_inputs.clear();
         self.subtitle_inputs.clear();
+        self.remove_targets_map.clear();
         self.output.clear();
         self.game = Game::FutureTone;
 
@@ -110,6 +116,7 @@ impl GUIState {
         self.logger.reset();
 
         self.show_lyrics_dialog = false;
+        self.show_remove_targets_dialog = false;
 
         self.show_success_dialog = false;
         self.show_error_dialog = false;
@@ -117,15 +124,41 @@ impl GUIState {
     }
 
     pub fn add_dsc_input(&mut self, input: String) {
-        self.dsc_inputs.push(input);
+        if self.dsc_inputs.contains(&input) {
+            return;
+        }
+
+        self.dsc_inputs.push(input.clone());
+        self.remove_targets_map.push((input, false));
     }
 
     pub fn add_plaintext_input(&mut self, input: String) {
-        self.plaintext_inputs.push(input);
+        if self.plaintext_inputs.contains(&input) {
+            return;
+        }
+
+        self.plaintext_inputs.push(input.clone());
+        self.remove_targets_map.push((input, false));
     }
 
     pub fn add_subtitle_input(&mut self, input: String) {
         self.subtitle_inputs.push(input);
+    }
+
+    pub fn remove_dsc_input(&mut self, index: usize) {
+        let removed = self.dsc_inputs.remove(index);
+        self.remove_targets_map
+            .retain(|(input, _)| input != &removed);
+    }
+
+    pub fn remove_plaintext_input(&mut self, index: usize) {
+        let removed = self.plaintext_inputs.remove(index);
+        self.remove_targets_map
+            .retain(|(input, _)| input != &removed);
+    }
+
+    pub fn remove_subtitle_input(&mut self, index: usize) {
+        self.subtitle_inputs.remove(index);
     }
 
     pub fn set_output(&mut self, output: String) {
@@ -142,6 +175,18 @@ impl GUIState {
 
     pub fn set_difficulty(&mut self, index: usize) {
         self.selected_difficulty = ChallengeTimeDifficulty::from_integer(index);
+    }
+
+    fn get_remove_targets_inputs(&self) -> Vec<String> {
+        let mut remove_targets = Vec::new();
+
+        for (input, remove) in &self.remove_targets_map {
+            if *remove {
+                remove_targets.push(input.to_string());
+            }
+        }
+
+        remove_targets
     }
 
     pub fn merge(&mut self) -> ApplicationResult {
@@ -166,6 +211,7 @@ impl GUIState {
             self.dsc_inputs.clone(),
             self.plaintext_inputs.clone(),
             self.subtitle_inputs.clone(),
+            self.get_remove_targets_inputs(),
             self.output.clone(),
             self.game,
             self.pv_id.clamp(0, 999).try_into().unwrap(),

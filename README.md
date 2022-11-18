@@ -65,6 +65,9 @@ will not run the program in interactive mode.
     timestamped lyrics. You may provide multiple but their pv_db will be
     separate. The file must have one of the following extensions: `.srt`, `.ass`
     or `.ssa`.
+-   `--rt` - A path from which target-related commands will be removed. This is
+    useful for chart remakes, as it can remove the targets from the original
+    chart but keep every other aspect of the chart at the same time.
 -   `--pv-id` - The ID of the PV that will be used to generate the entries for
     the lyrics in pv_db. Defaults to `0`.
 -   `--english-lyrics` - Whether the specified lyrics are in English. This will

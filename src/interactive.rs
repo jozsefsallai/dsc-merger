@@ -47,6 +47,11 @@ impl InteractiveTUI {
         let game = tui.prompt_game();
         let input_files = tui.prompt_input_files();
 
+        let combined_input_files =
+            [input_files.dsc.clone(), input_files.plaintext.clone()].concat();
+
+        let remove_targets_files = tui.prompt_remove_targets_files(combined_input_files.clone());
+
         let mut pv_id = 0;
         let mut english_lyrics = false;
         let mut max_lyric_length = 75;
@@ -85,6 +90,7 @@ impl InteractiveTUI {
             input_files.dsc,
             input_files.plaintext,
             input_files.subtitle,
+            remove_targets_files,
             output,
             game,
             pv_id,
@@ -183,6 +189,28 @@ impl InteractiveTUI {
         }
 
         input_files
+    }
+
+    fn prompt_remove_targets_files(&self, inputs: Vec<String>) -> Vec<String> {
+        let question = Question::multi_select("remove_targets_files")
+            .message("If you want to remove targets from certain charts, select them here.")
+            .choices(
+                inputs
+                    .iter()
+                    .map(|input| input.to_string())
+                    .collect::<Vec<String>>(),
+            )
+            .build();
+
+        let answer = prompt_one(question).unwrap();
+
+        match answer.as_list_items() {
+            Some(items) => items
+                .iter()
+                .map(|item| item.text.to_string())
+                .collect::<Vec<String>>(),
+            None => Vec::new(),
+        }
     }
 
     fn prompt_pv_id(&self) -> u16 {

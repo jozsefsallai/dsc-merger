@@ -32,6 +32,7 @@ impl GUIComponents {
                 self.draw_vertical_spacing(ui, 10.0);
                 self.draw_input_columns(ui, state);
                 self.draw_subtitle_components(ui, state);
+                self.draw_remove_targets_components(ui, state);
                 self.draw_vertical_spacing(ui, 10.0);
                 self.draw_challenge_time_components(ui, state);
                 self.draw_vertical_spacing(ui, 10.0);
@@ -42,6 +43,7 @@ impl GUIComponents {
 
                 self.draw_status_bar(ui, state);
 
+                self.draw_remove_targets_dialog(ui, state);
                 self.draw_success_dialog(ui, state);
                 self.draw_error_dialog(ui, state);
                 self.draw_lyrics_dialog(ui, state);
@@ -130,7 +132,7 @@ impl GUIComponents {
             ui.same_line();
 
             if ui.button("- DSC") {
-                state.dsc_inputs.remove(state.selected_dsc_index);
+                state.remove_dsc_input(state.selected_dsc_index);
             }
         }
     }
@@ -173,9 +175,7 @@ impl GUIComponents {
             ui.same_line();
 
             if ui.button("- Plaintext") {
-                state
-                    .plaintext_inputs
-                    .remove(state.selected_plaintext_index);
+                state.remove_plaintext_input(state.selected_plaintext_index);
             }
         }
     }
@@ -220,7 +220,7 @@ impl GUIComponents {
             ui.same_line();
 
             if ui.button("- Subtitle") {
-                state.subtitle_inputs.remove(state.selected_subtitle_index);
+                state.remove_subtitle_input(state.selected_subtitle_index);
             }
         }
     }
@@ -243,6 +243,20 @@ impl GUIComponents {
             ui.next_column();
 
             ui.columns(1, "challenge_time_columns", false);
+        }
+    }
+
+    fn draw_remove_targets_components(&mut self, ui: &Ui, state: &mut GUIState) {
+        if state.dsc_inputs.len() == 0 && state.plaintext_inputs.len() == 0 {
+            return;
+        }
+
+        self.draw_vertical_spacing(ui, 10.0);
+
+        self.draw_left_label(ui, "Remove targets from scripts:");
+
+        if ui.button("Select scripts...") {
+            state.show_remove_targets_dialog = true;
         }
     }
 
@@ -545,6 +559,33 @@ impl GUIComponents {
 
             if self.draw_centered_button(ui, "Close") {
                 state.show_lyrics_dialog = false;
+            }
+        });
+    }
+
+    fn draw_remove_targets_dialog(&mut self, ui: &Ui, state: &mut GUIState) {
+        if !state.show_remove_targets_dialog {
+            return;
+        }
+
+        let window = Window::new("Remove targets...")
+            .always_auto_resize(true)
+            .resizable(false)
+            .collapsible(false);
+
+        window.build(ui, || {
+            ui.text("Select the files you want to remove targets from:");
+
+            self.draw_vertical_spacing(ui, 5.0);
+
+            for (file, remove) in state.remove_targets_map.iter_mut() {
+                ui.checkbox(self.filename_from_path(file), remove);
+            }
+
+            self.draw_vertical_spacing(ui, 5.0);
+
+            if self.draw_centered_button(ui, "Close") {
+                state.show_remove_targets_dialog = false;
             }
         });
     }

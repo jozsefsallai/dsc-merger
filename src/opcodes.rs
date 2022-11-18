@@ -211,7 +211,7 @@ impl OpcodeMeta {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct Command {
     pub meta: OpcodeMeta,
     pub args: Vec<i32>,
@@ -732,5 +732,11 @@ impl Command {
         }
 
         Err(ApplicationError::UnknownOpcodeName(name))
+    }
+}
+
+impl std::cmp::PartialEq for Command {
+    fn eq(&self, other: &Self) -> bool {
+        self.meta.opcode == other.meta.opcode && self.args == other.args
     }
 }

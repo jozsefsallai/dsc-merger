@@ -4,6 +4,14 @@ use crate::common::{get_time_command, ChallengeTime, ChallengeTimeDifficulty};
 use crate::dsc::DSCVM;
 use crate::opcodes::{Command, Opcode, OpcodeMeta};
 
+const TARGET_COMMAND_OPCODES: [Opcode; 5] = [
+    Opcode::TARGET,
+    Opcode::TARGET_FLYING_TIME,
+    Opcode::TARGET_EFFECT,
+    Opcode::TARGET_FLAG,
+    Opcode::EDIT_TARGET,
+];
+
 pub struct Event {
     pub time: i32,
     pub commands: Vec<Command>,
@@ -28,7 +36,18 @@ impl DSCMerger {
 
     fn add_command(&mut self, timestamp: i32, command: Command) {
         if let Some(commands) = self.events.get_mut(&timestamp) {
-            commands.push(command);
+            let mut is_new_command = true;
+
+            for existing_command in commands.clone().iter() {
+                if existing_command == &command {
+                    is_new_command = false;
+                    break;
+                }
+            }
+
+            if is_new_command {
+                commands.push(command);
+            }
         } else {
             self.events.insert(timestamp, vec![command]);
         }
@@ -38,6 +57,10 @@ impl DSCMerger {
         let mut current_ts = 0;
 
         for command in dsc_vm.command_buffer {
+            if dsc_vm.remove_targets && TARGET_COMMAND_OPCODES.contains(&command.meta.opcode) {
+                continue;
+            }
+
             if command.meta.opcode == Opcode::TIME {
                 current_ts = command.args[0];
             } else {
@@ -84,7 +107,7 @@ impl DSCMerger {
     pub fn to_dsc(&mut self) -> DSCVM {
         let events = self.create_event_vector();
 
-        let mut dsc_vm = DSCVM::new();
+        let mut dsc_vm = DSCVM::new(false);
 
         for event in events {
             let time_command = get_time_command(event.time);

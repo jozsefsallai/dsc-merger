@@ -41,6 +41,9 @@ struct Arguments {
     #[arg(long, short)]
     subtitle_input: Vec<String>,
 
+    #[arg(long = "rt")]
+    remove_targets_input: Vec<String>,
+
     // Output path
     #[arg(short, long, default_value = "output.dsc")]
     output: String,
@@ -146,6 +149,7 @@ fn main() {
         args.input,
         args.plaintext_input,
         args.subtitle_input,
+        args.remove_targets_input,
         args.output,
         game,
         args.pv_id,

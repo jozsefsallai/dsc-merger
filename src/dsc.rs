@@ -12,12 +12,14 @@ use crate::{common::Game, logger::Logger};
 
 pub struct DSCVM {
     pub command_buffer: Vec<Command>,
+    pub remove_targets: bool,
 }
 
 impl DSCVM {
-    pub fn new() -> Self {
+    pub fn new(remove_targets: bool) -> Self {
         Self {
             command_buffer: Vec::new(),
+            remove_targets,
         }
     }
 
@@ -25,7 +27,7 @@ impl DSCVM {
         self.command_buffer.push(command);
     }
 
-    pub fn load(game: Game, file: &mut File) -> ApplicationResult<Self> {
+    pub fn load(game: Game, file: &mut File, remove_targets: bool) -> ApplicationResult<Self> {
         let mut command_buffer = Vec::new();
 
         let skip = match game {
@@ -59,10 +61,17 @@ impl DSCVM {
 
         command_buffer.push(Command::new(end, vec![]));
 
-        Ok(Self { command_buffer })
+        Ok(Self {
+            command_buffer,
+            remove_targets,
+        })
     }
 
-    pub fn load_plaintext(game: Game, file: &mut File) -> ApplicationResult<Self> {
+    pub fn load_plaintext(
+        game: Game,
+        file: &mut File,
+        remove_targets: bool,
+    ) -> ApplicationResult<Self> {
         let mut command_buffer = Vec::new();
 
         let reader = BufReader::new(file);
@@ -117,7 +126,10 @@ impl DSCVM {
             }
         }
 
-        Ok(Self { command_buffer })
+        Ok(Self {
+            command_buffer,
+            remove_targets,
+        })
     }
 
     pub fn load_subtitle<'a>(
@@ -136,7 +148,10 @@ impl DSCVM {
         match subtitle_file {
             Ok(mut subtitle_file) => {
                 match subtitle_file.create_lyric_commands(pv_id, is_english, max_line_length) {
-                    Ok(command_buffer) => Ok(Self { command_buffer }),
+                    Ok(command_buffer) => Ok(Self {
+                        command_buffer,
+                        remove_targets: false,
+                    }),
                     Err(err) => Err(err),
                 }
             }
